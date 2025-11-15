@@ -1,9 +1,7 @@
 package org.example;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.apache.commons.io.FileUtils;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.interactions.Actions;
@@ -11,6 +9,10 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -43,7 +45,7 @@ public class Utilities {
     // Launch a URL
     public static void launchURL(String url) {
         driver.navigate().to(url);
-        threadSleep(5000);
+        logger.info("Navigated to URL: " + url);
     }
 
     // ================= Wait Utilities ================= //
@@ -63,11 +65,13 @@ public class Utilities {
 
     // Wait for an element to be clickable
     public static void waitElementToBeClickable(By locator) {
+        wait = new WebDriverWait(driver, Duration.ofSeconds(30));
         wait.until(ExpectedConditions.elementToBeClickable(locator));
     }
 
     // Wait for the page to load completely
     public static void waitForPageLoad() {
+        wait = new WebDriverWait(driver, Duration.ofSeconds(30));
         wait.until(webDriver -> Objects.equals(((JavascriptExecutor) webDriver)
                 .executeScript("return document.readyState"), "complete"));
     }
@@ -177,5 +181,30 @@ public class Utilities {
     public String getPageSource() {
         return driver.getPageSource();
     }
+
+    // ==================== TAKE SCREENSHOT ====================
+    // Take a screenshot of the current page
+    public static void takeScreenshot(String screenshotsPath) {
+        try {
+            String timestamp = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss_SSS").format(new java.util.Date());
+            String fileName = "screenshot_" + timestamp + ".png";
+            File srcFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+
+            // Create folder if not exists
+            File folder = new File(screenshotsPath);
+            if (!folder.exists()) {
+                folder.mkdirs();
+            }
+            File destFile = new File(screenshotsPath + File.separator + fileName);
+            Files.copy(srcFile.toPath(), destFile.toPath());
+
+            logger.info("Screenshot saved at: " + destFile.getAbsolutePath());
+
+        } catch (Exception e) {
+            logger.severe("Failed to take screenshot: " + e.getMessage());
+        }
+    }
+
+
 
 }
